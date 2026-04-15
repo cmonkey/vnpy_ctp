@@ -110,8 +110,9 @@ elif host_machine.system() == 'darwin'
 
 # 设置Linux特定编译选项
 else  # Linux
-  # CTP version selection
-  ctp_version = get_option('ctp_version')
+  # CTP version selection — from meson option or CTP_VERSION env var
+  ctp_version_env = run_command('sh', '-c', 'echo ${CTP_VERSION:-}', check: false).stdout().strip()
+  ctp_version = ctp_version_env != '' ? ctp_version_env : get_option('ctp_version')
   message('CTP API version: ' + ctp_version)
 
   # Linux编译器设置
@@ -133,17 +134,26 @@ else  # Linux
 
   # Select SDK and install from sdk/{version}/ if available
   sdk_dir = meson.current_source_dir() / 'sdk' / ('v' + ctp_version)
+  api_dir = meson.current_source_dir() / 'vnpy_ctp' / 'api'
   if fs.is_dir(sdk_dir)
-    # Copy SDK .so and headers to api/ directory
     message('Using SDK from: ' + sdk_dir)
-    lib_dir = sdk_dir
+    # Copy SDK .so and headers to vnpy_ctp/api/ so pip wheel includes them
+    run_command('cp', sdk_dir / 'libthostmduserapi_se.so', api_dir, check: true)
+    run_command('cp', sdk_dir / 'libthosttraderapi_se.so', api_dir, check: true)
+    ctp_include_dir = api_dir / 'include' / 'ctp'
+    run_command('cp', sdk_dir / 'ThostFtdcMdApi.h', ctp_include_dir, check: true)
+    run_command('cp', sdk_dir / 'ThostFtdcTraderApi.h', ctp_include_dir, check: true)
+    run_command('cp', sdk_dir / 'ThostFtdcUserApiDataType.h', ctp_include_dir, check: true)
+    run_command('cp', sdk_dir / 'ThostFtdcUserApiStruct.h', ctp_include_dir, check: true)
+    message('Copied SDK v' + ctp_version + ' .so + headers to vnpy_ctp/api/')
+    lib_dir = api_dir
     include_dirs = include_directories(
-      'sdk' / ('v' + ctp_version),
+      'vnpy_ctp/api/include',
       'vnpy_ctp/api/vnctp',
       pybind11_include_dir,
     )
   else
-    lib_dir = meson.current_source_dir() / 'vnpy_ctp/api'
+    lib_dir = api_dir
     include_dirs = include_directories(
       'vnpy_ctp/api/include',
       'vnpy_ctp/api/vnctp',
@@ -234,17 +244,10 @@ elif host_machine.system() == 'darwin'
     install_dir: py.get_install_dir() / 'vnpy_ctp/api'
   )
 else  # Linux
-  if fs.is_dir(sdk_dir)
-    api_libs = [
-      'sdk' / ('v' + ctp_version) / 'libthostmduserapi_se.so',
-      'sdk' / ('v' + ctp_version) / 'libthosttraderapi_se.so',
-    ]
-  else
-    api_libs = [
-      'vnpy_ctp/api/libthostmduserapi_se.so',
-      'vnpy_ctp/api/libthosttraderapi_se.so',
-    ]
-  endif
+  api_libs = [
+    'vnpy_ctp/api/libthostmduserapi_se.so',
+    'vnpy_ctp/api/libthosttraderapi_se.so',
+  ]
 
   install_data(
     api_libs,
