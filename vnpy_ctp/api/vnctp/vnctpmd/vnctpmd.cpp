@@ -360,8 +360,8 @@ void MdApi::processRspUserLogin(Task *task)
 		data["GFEXTime"] = toUtf(task_data->GFEXTime);
 		data["LoginDRIdentityID"] = task_data->LoginDRIdentityID;
 		data["UserDRIdentityID"] = task_data->UserDRIdentityID;
-		data["LastLoginTime"] = toUtf(task_data->LastLoginTime);
-		data["ReserveInfo"] = toUtf(task_data->ReserveInfo);
+		/* v6.7.10: removed */ // data["LastLoginTime"] = toUtf(task_data->LastLoginTime);
+		/* v6.7.10: removed */ // data["ReserveInfo"] = toUtf(task_data->ReserveInfo);
 		delete task_data;
 	}
 	dict error;
@@ -609,9 +609,9 @@ void MdApi::processRtnForQuoteRsp(Task *task)
 ///主动函数
 ///-------------------------------------------------------------------------------------
 
-void MdApi::createFtdcMdApi(string pszFlowPath, bool bIsProductionMode)
+void MdApi::createFtdcMdApi(string pszFlowPath)
 {
-	this->api = CThostFtdcMdApi::CreateFtdcMdApi(pszFlowPath.c_str(), false, false, bIsProductionMode);
+	this->api = CThostFtdcMdApi::CreateFtdcMdApi(pszFlowPath.c_str(), false, false);
 	this->api->RegisterSpi(this);
 };
 

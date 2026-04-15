@@ -173,7 +173,7 @@ public:
 	//req:主动函数的请求字典
 	//-------------------------------------------------------------------------------------
 
-	void createFtdcMdApi(string pszFlowPath = "", bool bIsProductionMode = true);
+	void createFtdcMdApi(string pszFlowPath = "");
 
 	void release();
 
