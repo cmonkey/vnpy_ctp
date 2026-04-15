@@ -724,7 +724,7 @@ void TdApi::OnRspQryInstrumentCommissionRate(CThostFtdcInstrumentCommissionRateF
 	this->task_queue.push(task);
 };
 
-/* v6.7.10: removed
+#ifdef CTP_6_7_11
 void TdApi::OnRspQryUserSession(CThostFtdcUserSessionField* pUserSession, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast)
 {
 	Task task = Task();
@@ -745,7 +745,7 @@ void TdApi::OnRspQryUserSession(CThostFtdcUserSessionField* pUserSession, CThost
 	task.task_last = bIsLast;
 	this->task_queue.push(task);
 };
-*/
+#endif
 
 void TdApi::OnRspQryExchange(CThostFtdcExchangeField *pExchange, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) 
 {
@@ -4228,8 +4228,10 @@ void TdApi::processRspUserLogin(Task *task)
 		data["GFEXTime"] = toUtf(task_data->GFEXTime);
 		data["LoginDRIdentityID"] = task_data->LoginDRIdentityID;
 		data["UserDRIdentityID"] = task_data->UserDRIdentityID;
-		/* v6.7.10: removed */ // data["LastLoginTime"] = toUtf(task_data->LastLoginTime);
-		/* v6.7.10: removed */ // data["ReserveInfo"] = toUtf(task_data->ReserveInfo);
+#ifdef CTP_6_7_11
+		data["LastLoginTime"] = toUtf(task_data->LastLoginTime);
+		data["ReserveInfo"] = toUtf(task_data->ReserveInfo);
+#endif
 		delete task_data;
 	}
 	dict error;
@@ -10615,7 +10617,9 @@ void TdApi::processRtnOffsetSetting(Task* task)
 		data["StatusMsg"] = toUtf(task_data->StatusMsg);
 		data["ActiveUserID"] = toUtf(task_data->ActiveUserID);
 		data["BrokerOffsetSettingSeq"] = task_data->BrokerOffsetSettingSeq;
-		/* v6.7.10: removed */ // data["ApplySrc"] = task_data->ApplySrc;
+#ifdef CTP_6_7_11
+		data["ApplySrc"] = task_data->ApplySrc;
+#endif
 		delete task_data;
 	}
 	this->onRtnOffsetSetting(data);
@@ -10739,7 +10743,9 @@ void TdApi::processRspQryOffsetSetting(Task* task)
 		data["StatusMsg"] = toUtf(task_data->StatusMsg);
 		data["ActiveUserID"] = toUtf(task_data->ActiveUserID);
 		data["BrokerOffsetSettingSeq"] = task_data->BrokerOffsetSettingSeq;
-		/* v6.7.10: removed */ // data["ApplySrc"] = task_data->ApplySrc;
+#ifdef CTP_6_7_11
+		data["ApplySrc"] = task_data->ApplySrc;
+#endif
 		delete task_data;
 	}
 	dict error;
@@ -10757,9 +10763,13 @@ void TdApi::processRspQryOffsetSetting(Task* task)
 ///主动函数
 ///-------------------------------------------------------------------------------------
 
-void TdApi::createFtdcTraderApi(string pszFlowPath)
+void TdApi::createFtdcTraderApi(string pszFlowPath, bool bIsProductionMode)
 {
-    this->api = CThostFtdcTraderApi::CreateFtdcTraderApi(pszFlowPath.c_str());
+    this->api = CThostFtdcTraderApi::CreateFtdcTraderApi(pszFlowPath.c_str()
+#ifdef CTP_6_7_11
+        , bIsProductionMode
+#endif
+    );
     this->api->RegisterSpi(this);
 };
 
@@ -11646,7 +11656,7 @@ int TdApi::reqQryInstrumentCommissionRate(const dict &req, int reqid)
 	return i;
 };
 
-/* v6.7.10: removed
+#ifdef CTP_6_7_11
 int TdApi::reqQryUserSession(const dict& req, int reqid)
 {
 	CThostFtdcQryUserSessionField myreq = CThostFtdcQryUserSessionField();
@@ -11658,7 +11668,12 @@ int TdApi::reqQryUserSession(const dict& req, int reqid)
 	int i = this->api->ReqQryUserSession(&myreq, reqid);
 	return i;
 };
-*/
+#else
+int TdApi::reqQryUserSession(const dict& req, int reqid)
+{
+	return -10000;
+};
+#endif
 
 int TdApi::reqQryExchange(const dict &req, int reqid)
 {
@@ -14787,7 +14802,7 @@ PYBIND11_MODULE(vnctptd, m)
 		.def("reqQryTradingCode", &TdApi::reqQryTradingCode)
 		.def("reqQryInstrumentMarginRate", &TdApi::reqQryInstrumentMarginRate)
 		.def("reqQryInstrumentCommissionRate", &TdApi::reqQryInstrumentCommissionRate)
-		/* v6.7.10: removed */ // .def("reqQryUserSession", &TdApi::reqQryUserSession)
+		.def("reqQryUserSession", &TdApi::reqQryUserSession)
 		.def("reqQryExchange", &TdApi::reqQryExchange)
 		.def("reqQryProduct", &TdApi::reqQryProduct)
 		.def("reqQryInstrument", &TdApi::reqQryInstrument)
@@ -14906,7 +14921,7 @@ PYBIND11_MODULE(vnctptd, m)
 		.def("onRspQryTradingCode", &TdApi::onRspQryTradingCode)
 		.def("onRspQryInstrumentMarginRate", &TdApi::onRspQryInstrumentMarginRate)
 		.def("onRspQryInstrumentCommissionRate", &TdApi::onRspQryInstrumentCommissionRate)
-		/* v6.7.10: removed */ // .def("onRspQryUserSession", &TdApi::onRspQryUserSession)
+		.def("onRspQryUserSession", &TdApi::onRspQryUserSession)
 		.def("onRspQryExchange", &TdApi::onRspQryExchange)
 		.def("onRspQryProduct", &TdApi::onRspQryProduct)
 		.def("onRspQryInstrument", &TdApi::onRspQryInstrument)

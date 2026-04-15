@@ -110,6 +110,10 @@ elif host_machine.system() == 'darwin'
 
 # 设置Linux特定编译选项
 else  # Linux
+  # CTP version selection
+  ctp_version = get_option('ctp_version')
+  message('CTP API version: ' + ctp_version)
+
   # Linux编译器设置
   extra_cpp_args = [
     '-std=c++17',
@@ -117,20 +121,35 @@ else  # Linux
     '-Wno-delete-incomplete',
     '-Wno-sign-compare',
   ]
-  
+
+  # Pass CTP version define to C++ code
+  if ctp_version == '6.7.11'
+    extra_cpp_args += ['-DCTP_6_7_11']
+  endif
+
   extra_link_args = [
     '-lstdc++',
   ]
-  
-  # 设置库目录
-  lib_dir = meson.current_source_dir() / 'vnpy_ctp/api'
-  
-  # 设置include目录
-  include_dirs = include_directories(
-    'vnpy_ctp/api/include',
-    'vnpy_ctp/api/vnctp',
-    pybind11_include_dir,
-  )
+
+  # Select SDK and install from sdk/{version}/ if available
+  sdk_dir = meson.current_source_dir() / 'sdk' / ('v' + ctp_version)
+  if fs.is_dir(sdk_dir)
+    # Copy SDK .so and headers to api/ directory
+    message('Using SDK from: ' + sdk_dir)
+    lib_dir = sdk_dir
+    include_dirs = include_directories(
+      'sdk' / ('v' + ctp_version),
+      'vnpy_ctp/api/vnctp',
+      pybind11_include_dir,
+    )
+  else
+    lib_dir = meson.current_source_dir() / 'vnpy_ctp/api'
+    include_dirs = include_directories(
+      'vnpy_ctp/api/include',
+      'vnpy_ctp/api/vnctp',
+      pybind11_include_dir,
+    )
+  endif
   
   # 定义CTP库
   thostmduserapi_lib = cpp.find_library('thostmduserapi_se', 
@@ -215,11 +234,18 @@ elif host_machine.system() == 'darwin'
     install_dir: py.get_install_dir() / 'vnpy_ctp/api'
   )
 else  # Linux
-  api_libs = [
-    'vnpy_ctp/api/libthostmduserapi_se.so',
-    'vnpy_ctp/api/libthosttraderapi_se.so',
-  ]
-  
+  if fs.is_dir(sdk_dir)
+    api_libs = [
+      'sdk' / ('v' + ctp_version) / 'libthostmduserapi_se.so',
+      'sdk' / ('v' + ctp_version) / 'libthosttraderapi_se.so',
+    ]
+  else
+    api_libs = [
+      'vnpy_ctp/api/libthostmduserapi_se.so',
+      'vnpy_ctp/api/libthosttraderapi_se.so',
+    ]
+  endif
+
   install_data(
     api_libs,
     install_dir: py.get_install_dir() / 'vnpy_ctp/api'

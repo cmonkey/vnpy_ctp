@@ -323,7 +323,9 @@ public:
 	virtual void OnRspQryInstrumentCommissionRate(CThostFtdcInstrumentCommissionRateField *pInstrumentCommissionRate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
 	///请求查询用户会话响应
-	/* v6.7.10: removed */ // virtual void OnRspQryUserSession(CThostFtdcUserSessionField* pUserSession, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
+#ifdef CTP_6_7_11
+	virtual void OnRspQryUserSession(CThostFtdcUserSessionField* pUserSession, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
+#endif
 
 	///请求查询交易所响应
 	virtual void OnRspQryExchange(CThostFtdcExchangeField *pExchange, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
@@ -1378,7 +1380,7 @@ public:
     //req:主动函数的请求字典
     //-------------------------------------------------------------------------------------
 
-    void createFtdcTraderApi(string pszFlowPath = "");
+    void createFtdcTraderApi(string pszFlowPath = "", bool bIsProductionMode = true);
 
     void release();
 

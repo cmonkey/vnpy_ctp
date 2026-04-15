@@ -1,0 +1,1 @@
+option('ctp_version', type: 'combo', choices: ['6.7.10', '6.7.11'], value: '6.7.11', description: 'CTP API version')
